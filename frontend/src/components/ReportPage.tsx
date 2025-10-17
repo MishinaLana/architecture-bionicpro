@@ -22,7 +22,7 @@ const ReportPage: React.FC = () => {
         }
       });
 
-      
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -51,7 +51,7 @@ const ReportPage: React.FC = () => {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <div className="p-8 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold mb-6">Usage Reports</h1>
-        
+
         <button
           onClick={downloadReport}
           disabled={loading}
@@ -60,6 +60,7 @@ const ReportPage: React.FC = () => {
           }`}
         >
           {loading ? 'Generating Report...' : 'Download Report'}
+          {process.env.REACT_APP_API_URL}
         </button>
 
         {error && (

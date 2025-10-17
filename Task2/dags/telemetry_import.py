@@ -70,8 +70,12 @@ def clickhouse_connect_and_query():
 
     # Вставка данных
     with open('./dags/sql/device_telemetry_insert_queries.sql', 'r') as sqlfile:
-        sql = sqlfile.read()
-        client.execute(sql)
+        for sql in sqlfile.read():
+            client.execute(sql)
+#         for insert_query in sql:
+#
+#         print(sql)
+
 
 with DAG(
     'clickhouse_example',

@@ -56,7 +56,7 @@ services:
     <<: *airflow-common
 
     ports:
-      - "8080:8080"
+      - "8085:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -150,5 +150,15 @@ services:
     networks:
       - dag_sample
 
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    volumes:
+      - ./api/app:/code/app
+    ports:
+      - "8082:80"
+    networks:
+      - dag_sample
 networks:
   dag_sample:

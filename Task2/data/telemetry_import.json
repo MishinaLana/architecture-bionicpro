@@ -21,28 +21,28 @@
     },
     {
       "device_id": "BIO-A71-2284",
-      "timestamp": "1760636552",
+      "timestamp": "1760636555",
       "telemetry": {
-        "battery_level": 87,
+        "battery_level": 86,
         "gesture": "grab_power",
-        "confidence": 89,
+        "confidence": 87,
         "fingers": {
-          "thumb": 47,
-          "index": 76,
+          "thumb": 45,
+          "index": 22,
           "middle": 61,
           "ring": 25,
           "pinky": 15
         },
         "grip_force": 65,
         "signal_quality": 92,
-        "temperature": 32.6
+        "temperature": 33.6
       }
     },
     {
       "device_id": "BIO-A71-2284",
-      "timestamp": "1760636552",
+      "timestamp": "1760636559",
       "telemetry": {
-        "battery_level": 87,
+        "battery_level": 84,
         "gesture": "grab_power",
         "confidence": 95,
         "fingers": {
@@ -54,7 +54,7 @@
         },
         "grip_force": 65,
         "signal_quality": 92,
-        "temperature": 33.1
+        "temperature": 35.1
       }
     }
   ]
