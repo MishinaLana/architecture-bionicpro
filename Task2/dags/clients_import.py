@@ -45,7 +45,7 @@ with DAG('clients_to_postgres_dag',
         DROP TABLE IF EXISTS crm_client;
         CREATE TABLE crm_client (
             email VARCHAR(500),
-            device_id UUID,
+            device_id VARCHAR(100),
             constraint unique_email_device_id unique(email, device_id)
         );
         """

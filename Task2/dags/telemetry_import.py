@@ -1,13 +1,18 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
-from datetime import datetime
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+from clickhouse_driver import Client
+from datetime import datetime, timedelta
+import pandas as pd
 import json
 
-# Аргументы по умолчанию: владелец процесса и время отсчета для задачи
 default_args = {
     'owner': 'airflow',
+    'depends_on_past': False,
     'start_date': datetime(2024, 12, 1),
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+    'schedule_interval': '* * * * *',
 }
 
 # Функция для чтения данные и генерации SQL запросов
@@ -15,14 +20,16 @@ def generate_insert_queries():
     JSON_FILE_PATH = 'sample_files/telemetry_import.json'
     with open( JSON_FILE_PATH, 'r') as jsonfile:
         data = json.load(jsonfile)
-
+        postgres_hook = PostgresHook(postgres_conn_id='write_to_postgres')
         # Генерим запросы
         insert_queries = []
         for row in data['telemetry']:
             device_id = row['device_id']
             timestamp = row['timestamp']
             telemetry = json.dumps(row['telemetry'])
-            insert_query = f"INSERT INTO device_telemetry(device_id,created_at,telemetry) VALUES('{device_id}',TO_TIMESTAMP({timestamp}),'{telemetry}');"
+            df = postgres_hook.get_pandas_df(f"SELECT email FROM crm_client WHERE device_id='{device_id}';")
+            email = df.loc[0, 'email']
+            insert_query = f"INSERT INTO device_telemetry(device_id,created_at,telemetry,user_email) VALUES ('{device_id}',fromUnixTimestamp({timestamp}),'{telemetry}','{email}');"
             insert_queries.append(insert_query)
 
         # Сохраняем запросы
@@ -30,38 +37,60 @@ def generate_insert_queries():
             for query in insert_queries:
                 f.write(f"{query}\n")
 
-
-# Определяем DAG
-with DAG('device_telemetry_to_postgres_dag',
-         default_args=default_args, #аргументы по умолчанию в начале скрипта
-         schedule_interval='@once', #запускаем один раз
-         catchup=False) as dag: #предотвращает повторное выполнение DAG для пропущенных расписаний.
-
-    # Создаем таблицу в PostgreSQL
-    create_table = PostgresOperator(
-        task_id='create_table', #идентификатор задачи
-        postgres_conn_id='write_to_postgres',  # Название подключения
-        sql="""
-        DROP TABLE IF EXISTS device_telemetry;
-        CREATE TABLE device_telemetry (
-            device_id VARCHAR(100),
-            created_at TIMESTAMP,
-            telemetry JSONB
-        );
-        """
+def create_clickhose_table():
+    client = Client(
+        host='clickhouse',
+        port=9000,
+        user='admin',
+        password='clickhouse_password',
+        database='default'
     )
 
-    #Опеределяем оператор для вставки данных
-    generate_queries = PythonOperator(
-    task_id='generate_insert_queries',
-    python_callable=generate_insert_queries
+    # Создание таблицы
+    client.execute('''
+        CREATE TABLE IF NOT EXISTS device_telemetry (
+            user_email String,
+            device_id String,
+            created_at DateTime,
+            telemetry String
+        ) ENGINE = MergeTree()
+        PARTITION BY toYYYYMM(created_at)
+        ORDER BY (device_id, created_at);
+    ''')
+
+def clickhouse_connect_and_query():
+    """Подключение к ClickHouse и выполнение запроса"""
+    client = Client(
+            host='clickhouse',
+            port=9000,
+            user='admin',
+            password='clickhouse_password',
+            database='default'
     )
 
-    #Запускаем выполнение оператора PostgresOperator
-    run_insert_queries = PostgresOperator(
-        task_id='run_insert_queries',
-        postgres_conn_id='write_to_postgres',  # Название подключения к PostgreSQL в Airflow UI
-        sql='sql/device_telemetry_insert_queries.sql'
+    # Вставка данных
+    with open('./dags/sql/device_telemetry_insert_queries.sql', 'r') as sqlfile:
+        sql = sqlfile.read()
+        client.execute(sql)
+
+with DAG(
+    'clickhouse_example',
+    default_args=default_args,
+    schedule_interval='@once',
+    catchup=False,
+) as dag:
+
+    generate_sql = PythonOperator(
+        task_id='generate_sql',
+        python_callable=generate_insert_queries
     )
-    create_table>>generate_queries>>run_insert_queries
-    # Тут дальше можно продолжать пайплайн
+    create_table = PythonOperator(
+        task_id='create_table',
+        python_callable=create_clickhose_table
+    )
+    run_clickhouse_query = PythonOperator(
+        task_id='run_clickhouse_query',
+        python_callable=clickhouse_connect_and_query
+    )
+
+    generate_sql>>create_table>>run_clickhouse_query
