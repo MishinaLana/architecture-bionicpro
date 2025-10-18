@@ -2,6 +2,7 @@ from typing import Union
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import StreamingResponse
 import jwt
 from cryptography.hazmat.primitives import serialization
 from pathlib import Path
@@ -42,10 +43,21 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     payload = jwt.decode(token, public_key, algorithms=["RS256"])
     return payload
 
+def generate_json_report_for_user(email):
+    import json
+    client = get_clickhouse_client()
+    items = client.execute(f"SELECT device_id, user_email, toString(toDateTime(created_at)) as created_at_str, telemetry FROM device_telemetry WHERE user_email='{email}'")
+
+    return json.dumps(items, indent=2)
+
 
 @app.get("/reports")
 def read_root(current_user: dict = Depends(get_current_user)):
-    client = get_clickhouse_client()
+
     email = current_user.get('email')
-    items = client.execute(f"SELECT * FROM device_telemetry WHERE user_email='{email}'")
-    return items
+
+    return StreamingResponse(
+       iter([generate_json_report_for_user(email)]),
+       media_type="application/json",
+       headers={"Content-Disposition": "attachment; filename=devices.json"}
+   )

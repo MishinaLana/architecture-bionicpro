@@ -48,6 +48,7 @@ def create_clickhose_table():
 
     # Создание таблицы
     client.execute('''
+        DROP TABLE device_telemetry;
         CREATE TABLE IF NOT EXISTS device_telemetry (
             user_email String,
             device_id String,
@@ -70,12 +71,8 @@ def clickhouse_connect_and_query():
 
     # Вставка данных
     with open('./dags/sql/device_telemetry_insert_queries.sql', 'r') as sqlfile:
-        for sql in sqlfile.read():
-            client.execute(sql)
-#         for insert_query in sql:
-#
-#         print(sql)
-
+        sql = sqlfile.read()
+        client.execute(sql)
 
 with DAG(
     'clickhouse_example',
