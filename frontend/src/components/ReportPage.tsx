@@ -20,8 +20,14 @@ const ReportPage: React.FC = () => {
         headers: {
           'Authorization': `Bearer ${keycloak.token}`
         }
-      });
-
+      })
+      const blob: Blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link: HTMLAnchorElement = document.createElement('a');
+      link.href = objectUrl;
+      link.download = 'report.json';
+      link.click();
+      URL.revokeObjectURL(objectUrl);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -60,7 +66,6 @@ const ReportPage: React.FC = () => {
           }`}
         >
           {loading ? 'Generating Report...' : 'Download Report'}
-          {process.env.REACT_APP_API_URL}
         </button>
 
         {error && (
