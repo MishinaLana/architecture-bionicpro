@@ -48,7 +48,6 @@ def create_clickhose_table():
 
     # Создание таблицы
     client.execute('''
-        DROP TABLE device_telemetry;
         CREATE TABLE IF NOT EXISTS device_telemetry (
             user_email String,
             device_id String,
@@ -75,7 +74,7 @@ def clickhouse_connect_and_query():
         client.execute(sql)
 
 with DAG(
-    'clickhouse_example',
+    'telemetry_import',
     default_args=default_args,
     schedule_interval='@once',
     catchup=False,
