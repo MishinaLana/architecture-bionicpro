@@ -1,0 +1,61 @@
+{
+  "telemetry": [
+    {
+      "device_id": "BIO-A71-2284",
+      "timestamp": "1760636552",
+      "telemetry": {
+        "battery_level": 87,
+        "gesture": "grab_power",
+        "confidence": 88,
+        "fingers": {
+          "thumb": 45,
+          "index": 75,
+          "middle": 60,
+          "ring": 25,
+          "pinky": 15
+        },
+        "grip_force": 65,
+        "signal_quality": 92,
+        "temperature": 32.1
+    }
+    },
+    {
+      "device_id": "BIO-A71-2284",
+      "timestamp": "1760636555",
+      "telemetry": {
+        "battery_level": 86,
+        "gesture": "grab_power",
+        "confidence": 87,
+        "fingers": {
+          "thumb": 45,
+          "index": 22,
+          "middle": 61,
+          "ring": 25,
+          "pinky": 15
+        },
+        "grip_force": 65,
+        "signal_quality": 92,
+        "temperature": 33.6
+      }
+    },
+    {
+      "device_id": "BIO-A71-2284",
+      "timestamp": "1760636559",
+      "telemetry": {
+        "battery_level": 84,
+        "gesture": "grab_power",
+        "confidence": 95,
+        "fingers": {
+          "thumb": 49,
+          "index": 70,
+          "middle": 55,
+          "ring": 25,
+          "pinky": 15
+        },
+        "grip_force": 65,
+        "signal_quality": 92,
+        "temperature": 35.1
+      }
+    }
+  ]
+}
